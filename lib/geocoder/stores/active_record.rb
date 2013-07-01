@@ -235,15 +235,31 @@ module Geocoder::Store
     end
 
     ##
+    # Convenience method to perform the geocode lookup
+    # in Sidekiq
+    #
+    def geocode_async(options = {})
+      case options[:driver]
+      when :sidekiq
+        Geocoder::Worker::LookupWorker.perform_async(self.class.to_s, id)
+      end
+    end
+
+    ##
     # Look up coordinates and assign to +latitude+ and +longitude+ attributes
     # (or other as specified in +geocoded_by+). Returns coordinates (array).
     #
-    def geocode
+    def geocode(options = {})
       do_lookup(false) do |o,rs|
         if r = rs.first
           unless r.latitude.nil? or r.longitude.nil?
-            o.__send__  "#{self.class.geocoder_options[:latitude]}=",  r.latitude
-            o.__send__  "#{self.class.geocoder_options[:longitude]}=", r.longitude
+            if options[:async]
+              o.update_column(self.class.geocoder_options[:latitude], r.latitude)
+              o.update_column(self.class.geocoder_options[:longitude], r.longitude)
+            else
+              o.__send__  "#{self.class.geocoder_options[:latitude]}=",  r.latitude
+              o.__send__  "#{self.class.geocoder_options[:longitude]}=", r.longitude
+            end
           end
           r.coordinates
         end
