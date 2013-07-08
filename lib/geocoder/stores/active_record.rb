@@ -238,8 +238,8 @@ module Geocoder::Store
     # Convenience method to perform the geocode lookup
     # in Sidekiq
     #
-    def geocode_async(options = {})
-      case options[:driver]
+    def geocode_async
+      case Geocoder.config.async_driver
       when :sidekiq
         Geocoder::Worker::LookupWorker.perform_async(self.class.to_s, id)
       end

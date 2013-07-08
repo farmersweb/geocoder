@@ -61,7 +61,8 @@ module Geocoder
       :cache_prefix,
       :always_raise,
       :units,
-      :distances
+      :distances,
+      :async_driver
     ]
 
     attr_accessor :data
@@ -111,6 +112,9 @@ module Geocoder
       # calculation options
       @data[:units]     = :mi      # :mi or :km
       @data[:distances] = :linear  # :linear or :spherical
+
+      # Using background processes for geocoding
+      @data[:async_driver] = nil
     end
 
     instance_eval(OPTIONS.map do |option|
